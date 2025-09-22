@@ -97,21 +97,6 @@ export const signOutAdmin = async (): Promise<{ success: boolean; error?: string
     return { success: false, error: error.message || 'Sign out failed' };
   }
 };
-      return { success: false, error: error.message };
-    }
-    return { success: true };
-  } catch (error: any) {
-    // Handle the specific case where session doesn't exist on server
-    if (error.message && error.message.includes('session_not_found')) {
-      return { success: true };
-    }
-    // Handle the specific case where session doesn't exist on server
-    if (error.message && error.message.includes('session_not_found')) {
-      return { success: true };
-    }
-    return { success: false, error: error.message || 'Sign out failed' };
-  }
-};
 
 // Get current admin user
 export const getCurrentAdmin = async (): Promise<{ user: AdminUser | null; error?: string }> => {
