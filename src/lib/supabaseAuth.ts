@@ -60,7 +60,43 @@ export const signInAdmin = async (email: string, password: string): Promise<Auth
 export const signOutAdmin = async (): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase.auth.signOut();
-    if (error && error.message !== 'Session from session_id claim in JWT does not exist') {
+    if (error) {
+      // Check for session-related errors that should be treated as successful logout
+      const sessionGoneMessages = [
+        'session_not_found',
+        'Session from session_id claim in JWT does not exist',
+        'session does not exist'
+      ];
+      
+      const isSessionGone = sessionGoneMessages.some(msg => 
+        error.message.toLowerCase().includes(msg.toLowerCase())
+      );
+      
+      if (!isSessionGone) {
+        return { success: false, error: error.message };
+      }
+    }
+    return { success: true };
+  } catch (error: any) {
+    // Handle the specific case where session doesn't exist on server
+    if (error.message) {
+      const sessionGoneMessages = [
+        'session_not_found',
+        'Session from session_id claim in JWT does not exist',
+        'session does not exist'
+      ];
+      
+      const isSessionGone = sessionGoneMessages.some(msg => 
+        error.message.toLowerCase().includes(msg.toLowerCase())
+      );
+      
+      if (isSessionGone) {
+        return { success: true };
+      }
+    }
+    return { success: false, error: error.message || 'Sign out failed' };
+  }
+};
       return { success: false, error: error.message };
     }
     return { success: true };
