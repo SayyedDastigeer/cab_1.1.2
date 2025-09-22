@@ -69,6 +69,10 @@ export const signOutAdmin = async (): Promise<{ success: boolean; error?: string
     if (error.message && error.message.includes('session_not_found')) {
       return { success: true };
     }
+    // Handle the specific case where session doesn't exist on server
+    if (error.message && error.message.includes('session_not_found')) {
+      return { success: true };
+    }
     return { success: false, error: error.message || 'Sign out failed' };
   }
 };
