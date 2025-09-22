@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { signInAdmin, signOutAdmin, getCurrentAdmin, resetPassword, updatePassword, onAuthStateChange, AdminUser } from '../lib/supabaseAuth';
+import { supabase } from '../lib/supabase'; // adjust path if needed
+import { User } from '@supabase/supabase-js';
+import {
+  signInAdmin,
+  signOutAdmin,
+  resetPassword,
+  updatePassword,
+  AdminUser,
+} from '../lib/supabaseAuth';
 
 interface SupabaseAuthContextType {
   user: AdminUser | null;
@@ -21,33 +29,49 @@ export const useSupabaseAuth = () => {
   return context;
 };
 
+// ✅ helper function: map Supabase User → AdminUser
+function mapToAdminUser(user: User): AdminUser {
+  return {
+    id: user.id,
+    email: user.email ?? '',
+    role: 'admin', // you can also fetch this from your `admin_users` table if needed
+    created_at: (user as any).created_at ?? '', // fallback to empty string if not present
+  };
+}
+
 export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
-    const checkUser = async () => {
-      try {
-        const { user: currentUser } = await getCurrentAdmin();
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Error checking current user:', error);
-      } finally {
-        setIsLoading(false);
+    // ✅ Check existing session
+    const getSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error fetching session:', error.message);
       }
+      if (data.session?.user) {
+        setUser(mapToAdminUser(data.session.user));
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
     };
 
-    checkUser();
+    getSession();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = onAuthStateChange((user) => {
-      setUser(user);
+    // ✅ Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(mapToAdminUser(session.user));
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
     });
 
     return () => {
-      subscription?.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
 

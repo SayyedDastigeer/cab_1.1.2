@@ -2,9 +2,8 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Shield, User, Lock, LogIn } from "lucide-react";
 import { useSupabaseAuth } from "../contexts/SupabaseAuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
 
 const AdminLogin: React.FC = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -13,7 +12,7 @@ const AdminLogin: React.FC = () => {
   const { signIn, user, isAdmin } = useSupabaseAuth();
   const navigate = useNavigate();
 
-  // If already authenticated, redirect
+  // Redirect if already authenticated as admin
   useEffect(() => {
     if (user && isAdmin()) {
       navigate("/admin/dashboard");
@@ -21,21 +20,21 @@ const AdminLogin: React.FC = () => {
   }, [user, isAdmin, navigate]);
 
   // Handle form submit
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       const result = await signIn(formData.email, formData.password);
-      
+
       if (result.success) {
         toast.success("Login successful!");
         navigate("/admin/dashboard");
       } else {
-        toast.error(result.error || "Login failed");
+        toast.error(result.error || "Login failed. Please try again.");
       }
     } catch (error: any) {
-      toast.error(error.message || "Something went wrong. Please try again.");
+      toast.error(error?.message || "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -62,24 +61,24 @@ const AdminLogin: React.FC = () => {
             Admin Login
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            Secure access to Saffari admin dashboard
+            Secure access to Safari admin dashboard
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Username */}
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email Address
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
+                  setFormData((prev) => ({ ...prev, email: e.target.value }))
                 }
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter your email address"
@@ -95,15 +94,15 @@ const AdminLogin: React.FC = () => {
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="password"
                 value={formData.password}
                 onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
+                  setFormData((prev) => ({ ...prev, password: e.target.value }))
                 }
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                placeholder="Enter password"
+                placeholder="Enter your password"
                 autoComplete="current-password"
                 required
               />
