@@ -78,26 +78,6 @@ export const signOutAdmin = async (): Promise<{ success: boolean; error?: string
     }
     return { success: true };
   } catch (error: any) {
-    // Handle the specific case where session doesn't exist on server
-    if (error.message) {
-      const sessionGoneMessages = [
-        'session_not_found',
-        'Session from session_id claim in JWT does not exist',
-        'session does not exist'
-      ];
-      
-      const isSessionGone = sessionGoneMessages.some(msg => 
-        error.message.toLowerCase().includes(msg.toLowerCase())
-      );
-      
-      if (isSessionGone) {
-        return { success: true };
-      }
-    }
-    return { success: false, error: error.message || 'Sign out failed' };
-  }
-};
-
 // Get current admin user
 export const getCurrentAdmin = async (): Promise<{ user: AdminUser | null; error?: string }> => {
   try {
