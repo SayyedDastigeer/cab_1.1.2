@@ -78,6 +78,8 @@ export const signOutAdmin = async (): Promise<{ success: boolean; error?: string
     }
     return { success: true };
   } catch (error: any) {
+  }
+}
 // Get current admin user
 export const getCurrentAdmin = async (): Promise<{ user: AdminUser | null; error?: string }> => {
   try {
