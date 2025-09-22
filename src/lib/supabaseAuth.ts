@@ -60,11 +60,15 @@ export const signInAdmin = async (email: string, password: string): Promise<Auth
 export const signOutAdmin = async (): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase.auth.signOut();
-    if (error) {
+    if (error && error.message !== 'Session from session_id claim in JWT does not exist') {
       return { success: false, error: error.message };
     }
     return { success: true };
   } catch (error: any) {
+    // Handle the specific case where session doesn't exist on server
+    if (error.message && error.message.includes('session_not_found')) {
+      return { success: true };
+    }
     return { success: false, error: error.message || 'Sign out failed' };
   }
 };
