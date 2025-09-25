@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { useSupabaseAuth } from '../contexts/SupabaseAuthContext';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase'; // Make sure you import the supabase client
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 const AdminResetPassword: React.FC = () => {
@@ -15,37 +15,55 @@ const AdminResetPassword: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [isValidating, setIsValidating] = useState(true); // New state to prevent premature redirect
+  const [isValidating, setIsValidating] = useState(true);
 
   const { updateUserPassword } = useSupabaseAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const validateResetSession = async () => {
       try {
-        // Use getSession() to automatically handle the URL hash
+        // Step 1: Capture access_token & refresh_token from URL
+        const access_token = searchParams.get('access_token');
+        const refresh_token = searchParams.get('refresh_token');
+
+        if (access_token && refresh_token) {
+          const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (error) {
+            console.error('Error setting session:', error);
+            toast.error('Invalid or expired reset link.');
+            navigate('/admin/forgot-password');
+            return;
+          }
+        }
+
+        // Step 2: Now check if session exists
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error || !session) {
           console.error('Session error:', error);
-          toast.error('Invalid or expired reset link. Please request a new password reset.');
+          toast.error('Invalid or expired reset link. Please request a new one.');
           navigate('/admin/forgot-password');
           return;
         }
-        
+
         toast.success('Reset link validated. You can now set your new password.');
       } catch (error) {
         console.error('Validation error:', error);
         toast.error('Something went wrong. Please try again.');
         navigate('/admin/forgot-password');
       } finally {
-        // Stop the loading state once the check is complete
         setIsValidating(false);
       }
     };
 
     validateResetSession();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const validatePassword = (password: string) => {
     if (password.length < 8) return 'Password must be at least 8 characters long';
@@ -72,8 +90,6 @@ const AdminResetPassword: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // The updateUserPassword function should not require the access token
-      // because getSession() already set the active session.
       const result = await updateUserPassword(formData.password);
 
       if (result.success) {
@@ -90,7 +106,6 @@ const AdminResetPassword: React.FC = () => {
     }
   };
 
-  // Show a loading spinner while the session is being validated
   if (isValidating) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center py-12 px-4">
@@ -102,7 +117,6 @@ const AdminResetPassword: React.FC = () => {
     );
   }
 
-  // Your existing JSX for the success message and form
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center py-12 px-4">

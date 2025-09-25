@@ -12,8 +12,9 @@ export default defineConfig({
         secure: false,
       },
     },
+    allowedHosts: ['.trycloudflare.com'],
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
-  },
+  },
 });
