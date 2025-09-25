@@ -172,3 +172,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Create typed Supabase client
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+
+// ------------------------------
+// Function to ping Supabase and keep free-tier project alive
+export const pingSupabase = async () => {
+  try {
+    // Lightweight query: fetch just 1 row from 'customers'
+    await supabase.from('customers').select('id').limit(1);
+    console.log('Supabase ping successful');
+  } catch (error) {
+    console.error('Supabase ping failed:', error);
+  }
+};

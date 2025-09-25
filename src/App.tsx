@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -15,19 +14,30 @@ import AdminLogin from './pages/AdminLogin';
 import AdminForgotPassword from './pages/AdminForgotPassword';
 import AdminResetPassword from './pages/AdminResetPassword';
 import AdminDashboard from './pages/AdminDashboard';
-import DriveWithUs from './pages/DrivewithUs'; 
+import DriveWithUs from './pages/DrivewithUs';
+import { useEffect } from 'react';
+import { pingSupabase } from './lib/supabase'; // Import the ping function
 
-
-// A new component to handle conditional layout
+// Layout component
 function AppLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
 
+  // Ping Supabase on page load and every 5 minutes
+  useEffect(() => {
+    pingSupabase(); // Initial ping
+
+    const interval = setInterval(() => {
+      pingSupabase();
+    }, 5 * 60 * 1000); // Every 5 minutes
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      {/* Conditionally render the Header based on the route */}
       {!isAdminRoute && <Header />}
-      
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/services" element={<Services />} />
@@ -35,18 +45,17 @@ function AppLayout() {
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
         <Route path="/admin/reset-password" element={<AdminResetPassword />} />
-        <Route 
-          path="/admin/dashboard" 
+        <Route
+          path="/admin/dashboard"
           element={
             <ProtectedRoute requireAdmin={true}>
               <AdminDashboard />
             </ProtectedRoute>
-          } 
+          }
         />
         <Route path="/drive-with-us" element={<DriveWithUs />} />
       </Routes>
-      
-      {/* Conditionally render the Footer and StickyButton */}
+
       {!isAdminRoute && <Footer />}
 
       <Toaster position="top-right" />
